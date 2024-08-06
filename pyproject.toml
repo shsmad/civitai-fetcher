@@ -1,0 +1,89 @@
+[project]
+name = "civitai-fetcher"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "shsmad", email = "shsmad@gmail.com"},
+]
+dependencies = [
+    "httpx>=0.27.0",
+    "pydantic-settings>=2.4.0",
+    "safetensors>=0.4.4",
+    "numpy>=2.0.1",
+    "tqdm>=4.66.5",
+]
+requires-python = "==3.12.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "ruff>=0.5.6",
+    "mypy>=1.11.1",
+    "ipython>=8.26.0",
+    "ipdb>=0.13.13",
+]
+
+[tool.pdm.scripts]
+_.env_file = ".env"
+clear = "rm -rf .pytest_cache .ruff_cache .wheel_cache .sass-cache .pdm-build dist public"
+lint = "ruff check src"
+start = "python -m src.run"
+
+[tool.ruff]
+target-version = "py312"
+exclude = [
+    ".tox",
+    ".git",
+    "__pycache__",
+    "docs/source/conf.py",
+    "old",
+    "build",
+    "dist",
+    "*_pb2*.py",
+    "setup.py",
+]
+line-length = 120
+
+
+[tool.ruff.lint]
+ignore = [
+    "A003",
+    "D107",
+    "D202",
+    "D203",
+    "D401",
+]
+select = [
+    "A", # builtins
+    "B", # bugbear
+    "C4", # comprehensions
+    "COM", # commas
+    # "D",   # pydocstyle
+    "E", # pycodestyle
+    "F", # pyflakes
+    "I", # isort
+    "PT", # pytest-style
+    "S", # bandit
+    "SIM", # simplify
+    "T1", # debugger
+    "T2", # print
+    "UP", # pyupgrade
+    "W", # pycodestyle
+]
+# Avoid trying to fix flake8-bugbear (`B`) violations.
+unfixable = ["B"]
+
+
+[tool.ruff.lint.per-file-ignores]
+"test/*.py" = ["S101"]
+
+[tool.ruff.lint.isort]
+lines-between-types = 1
+known-first-party = ["test"]
+known-local-folder = ["src"]
+force-single-line = false
