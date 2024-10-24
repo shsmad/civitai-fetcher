@@ -1,0 +1,66 @@
+# docs_dir: …
+site_name: StableDiffusion Models
+site_dir: public
+
+theme:
+  name: material
+  # custom_dir: overrides
+
+  # 404 page
+  static_templates:
+    - 404.html
+
+  # Necessary for search to work properly
+  include_search_page: false
+  search_index_only: true
+
+  # Default values, taken from mkdocs_theme.yml
+  language: ru
+  # favicon: assets/favicon.png
+  # icon:
+  #   logo: logo
+
+  features:
+    - navigation.top
+    - navigation.tabs
+
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - admonition
+  - attr_list
+  - def_list
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.snippets
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+
+plugins:
+  - search
+  - autolinks
+  - offline
+
+extra:
+  generator: false
+# nav:
+#   - Главная: index.md
+#   - Реестр страниц: pages-index.md
+
+# extra_css:
+#   - src/templates/extra/extra.css
+# extra_javascript:
+#   - src/templates/extra/extra.js

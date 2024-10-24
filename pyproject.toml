@@ -11,6 +11,11 @@ dependencies = [
     "safetensors>=0.4.4",
     "numpy>=2.0.1",
     "tqdm>=4.66.5",
+    "blake3>=0.4.1",
+    "loguru>=0.7.2",
+    "mkdocs-material>=9.5.41",
+    "Jinja2>=3.1.4",
+    "mkdocs-autolinks-plugin>=0.7.1",
 ]
 requires-python = "==3.12.*"
 readme = "README.md"
@@ -26,6 +31,7 @@ dev = [
     "mypy>=1.11.1",
     "ipython>=8.26.0",
     "ipdb>=0.13.13",
+    "tqdm-stubs>=0.2.1",
 ]
 
 [tool.pdm.scripts]

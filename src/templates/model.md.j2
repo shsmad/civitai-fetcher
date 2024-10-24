@@ -1,0 +1,68 @@
+{% macro yes_no(val) -%}
+{{ '✅' if val else '❌'}}
+{%- endmacro %}
+{% macro show_meta(meta) %}
+{% for name, info in meta.items() %}
+<p>{{ name }}
+🎚️ {% if info.cfgScale[0] != info.cfgScale[1] %}{{ info.cfgScale[0] }}-{{ info.cfgScale[1] }}{% else %}{{ info.cfgScale[0] }}{% endif %}
+👣 {% if info.steps[0] != info.steps[1] %}{{ info.steps[0] }}-{{ info.steps[1] }}{% else %}{{ info.steps[0] }}{% endif %}
+</p>
+{% endfor %}
+{% endmacro %}
+# {{ model.name }}
+{{ model.type }}
+{# model.description #}
+
+{% for mv in model.modelVersions | sort(attribute="index") %}
+## {{ yes_no(mv._exists) }} <a href="{{ mv.url() }}">{{ mv.name }}</a> {{ mv.baseModel }} {{ mv.baseModelType}}
+{% if mv._exists %}
+{% if mv.trainedWords %}{{ mv.trainedWords }}{% endif %}{{ mv.air }}
+
+{# mv.description #}
+
+{{ show_meta(mv.get_meta()) }}
+
+{% if mv.images %}
+<style>
+.nsfw-image {
+  filter: blur(20px) contrast(0.5); /* Blur the image by default */
+  transition: filter 0.3s ease; /* Smooth transition for the blur effect */
+}
+
+.nsfw-image.clear {
+  filter: blur(0); /* Remove blur when class 'clear' is added */
+}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const nsfwImages = Array.from(document.getElementsByClassName('nsfw-image'));
+
+    nsfwImages.forEach(image => {
+        image.addEventListener('mousedown', function () {
+            image.classList.add('clear');
+        });
+
+        image.addEventListener('mouseup', function () {
+            image.classList.remove('clear');
+        });
+
+        // Optionally, handle the case where the mouse is released outside the image
+        image.addEventListener('mouseleave', function () {
+            image.classList.remove('clear');
+        });
+    });
+});
+</script>
+
+??? example "Примеры генерации"
+
+    {% for image in mv.images %}
+    <img src="{{ image.url }}" {% if not image.is_sfw() %}class="nsfw-image"{% endif %}/>
+    {% endfor %}
+{% endif %}
+{% else %}
+{%- for file in mv.files %}
+🗄️ <a href="{{ file.downloadUrl }}">{{ file.name }} [{{ file.metadata.fp }}, {{ file.metadata.size }}]</a>
+{% endfor -%}
+{% endif %}
+{% endfor %}

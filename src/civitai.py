@@ -10,10 +10,11 @@ import shutil
 import tempfile
 
 import httpx
+import loguru
 
 from tqdm import tqdm
 
-from src.models import CivitaiModel, CivitaiModelResponse
+from src.models import CivitaiModel, CivitaiModelVersion
 
 
 def parse_content_disposition(header):
@@ -35,67 +36,66 @@ class Civitai:
         self.api_key = api_key
         self.headers = {"Authorization": f"Bearer {self.api_key}"}
 
-    def get_model(self, modelId: str):
-        url = f"{self.base_url}/models/{modelId}"
+    def get_model(self, model_id: int):
+        url = f"{self.base_url}/models/{model_id}"
         x = httpx.get(url, headers=self.headers, timeout=None)
         return CivitaiModel(**x.json())
 
-    def get_by_modelVersion(self, modelVersionId: str):
-        url = f"{self.base_url}/model-versions/{modelVersionId}"
+    # def get_by_modelVersion(self, modelVersionId: str):
+    #     url = f"{self.base_url}/model-versions/{modelVersionId}"
+    #     x = httpx.get(url, headers=self.headers)
+    #     # return ModelVersion(x.json())
+    #     return x.json()
+
+    def get_modelversion_by_hash(self, filehash: str) -> CivitaiModelVersion | None:
+        url = f"{self.base_url}/model-versions/by-hash/{filehash}"
         x = httpx.get(url, headers=self.headers)
-        # return ModelVersion(x.json())
-        return x.json()
+        return None if x.status_code == 404 else CivitaiModelVersion(**x.json())
 
-    def get_by_hash(self, hash: str):
-        url = f"{self.base_url}/model-versions/by-hash/{hash}"
-        x = httpx.get(url, headers=self.headers)
-        # return ModelVersion(x.json())
-        return x.json()
+    # def search(
+    #     self,
+    #     limit: int | None = None,
+    #     page: int | None = None,
+    #     query: str | None = None,
+    #     tag: str | None = None,
+    #     username: str | None = None,
+    #     types: str | None = None,
+    #     sort: str | None = None,
+    #     period: str | None = None,
+    #     favorites: bool | None = None,
+    #     hidden: bool | None = None,
+    #     primaryFileOnly: bool | None = None,
+    #     allowNoCredit: bool | None = None,
+    #     allowDerivatives: bool | None = None,
+    #     allowDifferentLicenses: bool | None = None,
+    #     allowCommercialUse: bool | None = None,
+    #     nsfw: bool | None = None,
+    # ):
+    #     params = {
+    #         "limit": limit,
+    #         "page": page,
+    #         "query": query,
+    #         "tag": tag,
+    #         "username": username,
+    #         "types": types,
+    #         "sort": sort,
+    #         "period": period,
+    #         "favorites": favorites,
+    #         "hidden": hidden,
+    #         "primaryFileOnly": primaryFileOnly,
+    #         "allowNoCredit": allowNoCredit,
+    #         "allowDerivatives": allowDerivatives,
+    #         "allowDifferentLicenses": allowDifferentLicenses,
+    #         "allowCommercialUse": allowCommercialUse,
+    #         "nsfw": nsfw,
+    #     }
+    #     params = {k: v for k, v in params.items() if v is not None}
 
-    def search(
-        self,
-        limit: int | None = None,
-        page: int | None = None,
-        query: str | None = None,
-        tag: str | None = None,
-        username: str | None = None,
-        types: str | None = None,
-        sort: str | None = None,
-        period: str | None = None,
-        favorites: bool | None = None,
-        hidden: bool | None = None,
-        primaryFileOnly: bool | None = None,
-        allowNoCredit: bool | None = None,
-        allowDerivatives: bool | None = None,
-        allowDifferentLicenses: bool | None = None,
-        allowCommercialUse: bool | None = None,
-        nsfw: bool | None = None,
-    ):
-        params = {
-            "limit": limit,
-            "page": page,
-            "query": query,
-            "tag": tag,
-            "username": username,
-            "types": types,
-            "sort": sort,
-            "period": period,
-            "favorites": favorites,
-            "hidden": hidden,
-            "primaryFileOnly": primaryFileOnly,
-            "allowNoCredit": allowNoCredit,
-            "allowDerivatives": allowDerivatives,
-            "allowDifferentLicenses": allowDifferentLicenses,
-            "allowCommercialUse": allowCommercialUse,
-            "nsfw": nsfw,
-        }
-        params = {k: v for k, v in params.items() if v is not None}
+    #     url = f"{self.base_url}/models"
+    #     x = httpx.get(url, headers=self.headers, params=params, timeout=None)
+    #     return CivitaiModelResponse(**x.json())
 
-        url = f"{self.base_url}/models"
-        x = httpx.get(url, headers=self.headers, params=params, timeout=None)
-        return CivitaiModelResponse(**x.json())
-
-    def download(self, downloadUrl: str, outdir: str):
+    def download(self, downloadUrl: str, outdir: str) -> str:
         # Create a temporary file
         with tempfile.NamedTemporaryFile(delete=False) as download_file:
             temp_file_path = download_file.name
@@ -109,7 +109,9 @@ class Civitai:
             try:
                 # Open the temporary file in append mode
                 with open(temp_file_path, "ab") as f:
-                    print(f"Downloading {downloadUrl} to {temp_file_path} starting from {current_size} bytes")
+                    loguru.logger.info(
+                        f"Downloading {downloadUrl} to {temp_file_path} starting from {current_size} bytes",
+                    )
                     headers = self.headers.copy()
                     if current_size:
                         headers["Range"] = "bytes={current_size}-"
@@ -121,10 +123,6 @@ class Civitai:
                         timeout=None,
                         follow_redirects=True,
                     ) as response:
-                        import ipdb
-
-                        ipdb.set_trace()
-
                         if response.headers.get("Content-Disposition"):
                             # при продолжении докачки после обрыва скачивания имя пустое
                             real_filename = parse_content_disposition(response.headers["Content-Disposition"])
@@ -144,10 +142,12 @@ class Civitai:
                                 progress.update(len(chunk))
                                 num_bytes_downloaded += len(chunk)
                                 current_size += len(chunk)
-                    os.makedirs(outdir, exist_ok=True)
-                    shutil.move(temp_file_path, f"{outdir}/{real_filename}")
+                    os.makedirs(f"{outdir}/.civitai-fetcher/", exist_ok=True)
+                    shutil.move(temp_file_path, f"{outdir}/.civitai-fetcher/{real_filename}")
                     break
             except (httpx.RequestError, httpx.RemoteProtocolError) as e:
-                print(f"Request error: {e}")
+                loguru.logger.exception(f"Request error: {e}")
                 # Handle the error and retry the download
                 continue
+
+        return f"{outdir}/.civitai-fetcher/{real_filename}"
